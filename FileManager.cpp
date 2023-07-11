@@ -1,4 +1,4 @@
-#include <iostream>
+﻿#include <iostream>
 #include <fstream>
 #include <sstream>
 #include <cstring>
@@ -7,6 +7,11 @@
 using namespace std;
 
 FileManager::FileManager() {}
+
+void FileManager::setUserInfo(string &username)
+{
+    info.username = username;
+}
 
 bool FileManager::checkPermission(string username, string typeCheck, Permission fileAccess)
 {
@@ -60,7 +65,7 @@ void FileManager::getInfoFile(string dirName, string fileName, FileInfo &fileInf
         }
         else if (line.find("+ View:") == 0)
         {
-            string viewersStr = line.substr(8);
+            string viewersStr = line.substr(7);
             istringstream iss(viewersStr);
             string username;
 
@@ -75,7 +80,7 @@ void FileManager::getInfoFile(string dirName, string fileName, FileInfo &fileInf
         }
         else if (line.find("+ Edit:") == 0)
         {
-            string editorsStr = line.substr(8);
+            string editorsStr = line.substr(7);
             istringstream iss(editorsStr);
             string username;
 
@@ -89,7 +94,7 @@ void FileManager::getInfoFile(string dirName, string fileName, FileInfo &fileInf
         }
         else if (line.find("+ Delete:") == 0)
         {
-            string deletersStr = line.substr(10);
+            string deletersStr = line.substr(9);
             istringstream iss(deletersStr);
             string username;
 
@@ -192,10 +197,10 @@ void FileManager::writeInfoFile(string dirName, string fileName, FileInfo fileIn
 
 void FileManager::createFile(string dirName, string fileName)
 {
-    fstream newFile;
     string filePath = "./FileManager/" + dirName + "/" + fileName + ".txt";
-
-    newFile.open(filePath);
+    ofstream newFile(filePath);
+    // string file_Path = "./FileManager/" + dirName + "/" + fileName + "_data.txt";
+    // ofstream newFile_(file_Path);
 }
 
 // void FileManager::viewFile(string dirName, string fileName, FileInfo fileInfo, Permission fileAccess)
@@ -214,61 +219,104 @@ void FileManager::createFile(string dirName, string fileName)
 //         cout << "You don't have permission to access this file.";
 //     }
 // }
-
-void FileManager::moveFile(string currentDir, string targetDir, string fileName, FileInfo fileInfo, Permission fileAccess)
+/**
+ * @brief the function will check the user's permissions. If authorized, the user can move the file
+ * !Message error:
+ * 1: success
+ * -1: do not have this right
+ * -2: Unable to move file. Error: strerror(errno)
+ *
+ * @param currentDir
+ * @param targetDir
+ * @param fileName
+ * @param fileInfo
+ * @param fileAccess
+ */
+int FileManager::moveFile(string currentDir, string targetDir, string fileName, FileInfo fileInfo, Permission fileAccess)
 {
+
     if (fileInfo.authorName == info.username || checkPermission(info.username, "rename", fileAccess))
     {
         // Move file
-        string currentPath = "./FileManager/" + currentDir + "/" + fileName;
-        string targetPath = "./FileManager/" + targetDir + "/" + fileName;
-
+        string currentPath = "./FileManager/" + currentDir + "/" + fileName + ".txt";
+        string targetPath = "./FileManager/" + targetDir + "/" + fileName + ".txt";
+        string currentDataPath = "./FileManager/" + currentDir + "/" + fileName + "_data.txt";
+        string targetDataPath = "./FileManager/" + targetDir + "/" + fileName + "_data.txt";
         if (rename(currentPath.c_str(), targetPath.c_str()) == 0)
         {
-            cout << "File moved successfully.\n";
+            rename(currentDataPath.c_str(), targetDataPath.c_str());
+            return 1;
         }
         else
-        {
-            cout << "Unable to move file.\n";
-        }
+            return -2;
     }
-    else
-    {
-        cout << "You don't have permission to move this file.\n";
-    }
+    return -1;
 }
 
-void FileManager::copyFile(string currentDir, string targetDir, string fileName, FileInfo fileInfo, Permission fileAccess)
+/**
+ * @brief the function will check the user's permissions. If authorized, the user can copy the file
+ * !Message error:
+ * 1: success
+ * -1: do not have this right
+ * -2: Unable to copy file. Error: strerror(errno)
+ *
+ * @param currentDir
+ * @param targetDir
+ * @param fileName
+ * @param fileInfo
+ * @param fileAccess
+ */
+int FileManager::copyFile(string currentDir, string targetDir, string fileName, FileInfo fileInfo, Permission fileAccess)
 {
+    
     if (fileInfo.authorName == info.username || checkPermission(info.username, "rename", fileAccess))
     {
         // Copy file
         string currentPath = "./FileManager/" + currentDir + "/" + fileName + ".txt";
         string targetPath = "./FileManager/" + targetDir + "/" + fileName + ".txt";
+        string currentDataPath = "./FileManager/" + currentDir + "/" + fileName + "_data.txt";
+        string targetDataPath = "./FileManager/" + targetDir + "/" + fileName + "_data.txt";
 
         ifstream sourceFile(currentPath);
         ofstream targetFile(targetPath);
+        ifstream sourceDataFile(currentDataPath);
+        ofstream targetDataFile(targetDataPath);
 
-        if (sourceFile && targetFile)
+        if (sourceFile.is_open() && targetFile.is_open() && sourceDataFile.is_open() && targetDataFile.is_open())
         {
             targetFile << sourceFile.rdbuf();
-            cout << "File copied successfully.\n";
+
+            targetDataFile << sourceDataFile.rdbuf();
+
+            sourceFile.close();
+            targetFile.close();
+            sourceDataFile.close();
+            targetDataFile.close();
+
+            return 1;
         }
         else
         {
-            cout << "Unable to copy file.\n";
+            return -2;
         }
-
-        sourceFile.close();
-        targetFile.close();
     }
-    else
-    {
-        cout << "You don't have permission to copy this file.\n";
-    }
+    return -1;
 }
 
-void FileManager::renameFile(string dirName, string targetFile, string newFileName, FileInfo fileInfo, Permission fileAccess)
+/**
+ * @brief the function will check the user's permissions. If authorized, the user can rename file the file
+ * !Message error:
+ * 1: success
+ * -1: do not have this right
+ * -2: Unable to rename file. Error: strerror(errno)
+ *
+ * @param dirName
+ * @param targetFile
+ * @param newFileName
+ * @param fileInfo
+ * @param fileAccess
+ */
+int FileManager::renameFile(string dirName, string targetFile, string newFileName, FileInfo fileInfo, Permission fileAccess)
 {
     string dirPath = "./FileManager/";
     string oldName = dirPath + dirName + "/" + targetFile + ".txt";
@@ -276,57 +324,119 @@ void FileManager::renameFile(string dirName, string targetFile, string newFileNa
     string oldDataName = dirPath + dirName + "/" + targetFile + "_data.txt";
     string newDataName = dirPath + dirName + "/" + newFileName + "_data.txt";
 
-    cout << oldName;
+    // cout << oldName;
     if (fileInfo.authorName == info.username || checkPermission(info.username, "rename", fileAccess))
     {
         // rename
         if (rename(oldName.c_str(), newName.c_str()) == 0)
         {
             rename(oldDataName.c_str(), newDataName.c_str());
-            cout << "File renamed successfully.\n";
+            return 1;
         }
         else
         {
-            cout << "Unable to rename file. Error: " << strerror(errno) << "\n";
+            return -2;
         }
     }
-    else
-    {
-        cout << "You don't have permission to rename this file.";
-    }
+    return -1;
 }
 
-void FileManager::deleteFile(string dirName, string targetFile, FileInfo fileInfo, Permission fileAccess)
+/**
+ * @brief the function will check the user's permissions. If authorized, the user can delete the file
+ * !Message error:
+ * 1: success
+ * -1: do not have this right
+ * -2: Unable to delete file. Error: strerror(errno)
+ * @param dirName
+ * @param targetFile
+ * @param fileInfo
+ * @param fileAccess
+ */
+int FileManager::deleteFile(string dirName, string targetFile, FileInfo fileInfo, Permission fileAccess)
 {
     string dirPath = "./FileManager/";
     string removeFile = dirPath + dirName + "/" + targetFile + ".txt";
+    string removeDataFile = dirPath + dirName + "/" + targetFile + "_data.txt";
 
     if (fileInfo.authorName == info.username || checkPermission(info.username, "delete", fileAccess))
     {
         // delete file
         if (remove(removeFile.c_str()) == 0)
         {
-            cout << "File deleted successfully.\n";
+            remove(removeDataFile.c_str());
+            return 1;
         }
         else
-        {
-            cout << "Unable to delete file. Error: " << strerror(errno) << "\n";
-        }
+            return -2;
     }
-    else
-    {
-        cout << "You don't have permission to delete this file.";
-    }
+    return -1;
 }
 
-void FileManager::permissionsFile(string targetUser, string targetFile, FileInfo fileInfo, Permission fileAccess)
+/**
+ * @brief the function will check the user's permissions and check the username. if the user exists, it will push to the vector, then save it back to the file,
+ * !Message error:
+ * 1: successful
+ * -1: don't have this right.
+ * -2:
+ * @param targetUser
+ * @param targetFile
+ * @param permission
+ * @param fileInfo
+ * @param fileAccess
+ */
+int FileManager::permissionsFile(string targetUser, string targetFile, vector<string> permission, FileInfo &fileInfo, Permission &fileAccess)
 {
+    
     if (fileInfo.authorName == info.username)
     {
         // permission
+        if (checkInfo(targetUser))
+        {
+            for (int i = 0; i < permission.size(); i++)
+            {
+                if (permission[i] == "view")
+                    fileAccess.viewers.push_back(targetUser);
+                if (permission[i] == "edit")
+                    fileAccess.editors.push_back(targetUser);
+                if (permission[i] == "delete")
+                    fileAccess.deleters.push_back(targetUser);
+                if (permission[i] == "rename")
+                    fileAccess.renamers.push_back(targetUser);
+            }
+            return 1;
+        }
     }
-    else
-    {
-        cout << "You don't have this right.";
+    return -1;
+}
+
+vector<string> PrintFiles(const string& folderPath)
+{
+    WIN32_FIND_DATAA findData;
+    HANDLE hFind = INVALID_HANDLE_VALUE;
+
+    string searchPath = folderPath + "\\*";
+
+    hFind = FindFirstFileA(searchPath.c_str(), &findData);
+    if (hFind == INVALID_HANDLE_VALUE) {
+        cout << "Cannot open directory: " << folderPath << endl;
+        return vector<string>();
     }
+
+    vector<string> fileList;
+
+    do {
+        if (findData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) {
+            continue; // Bỏ qua thư mục
+        }
+        else {
+            string fileName(findData.cFileName);
+            if (fileName.find("_data.txt") == string::npos) {
+                fileList.push_back(fileName); // Thêm tên tệp tin vào danh sách
+            }
+        }
+    } while (FindNextFileA(hFind, &findData) != 0);
+
+    FindClose(hFind);
+
+    return fileList;
 }

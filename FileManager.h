@@ -18,11 +18,12 @@ public:
     void writeInfoFile(string dirName, string fileName, FileInfo fileInfo, Permission fileAccess);
     void createFile(string dirName, string fileName);
     // void viewFile(string dirname, string targetFile, FileInfo filleInfo, Permission fileAccess);
-    void moveFile(string currentDir, string targetDir, string fileName, FileInfo fileInfo, Permission fileAccess);
-    void copyFile(string currentDir, string targetDir, string fileName, FileInfo fileInfo, Permission fileAccess);
-    void renameFile(string dirName, string targetFile, string newFileName, FileInfo fileInfo, Permission fileAccess);
-    void deleteFile(string dirname, string targetFile, FileInfo fileInfo, Permission fileAccess);
-    void permissionsFile(string targetUser, string targetFile, FileInfo fileInfo, Permission fileAccess); // assign permissions to other users
+    int moveFile(string currentDir, string targetDir, string fileName, FileInfo fileInfo, Permission fileAccess);
+    int copyFile(string currentDir, string targetDir, string fileName, FileInfo fileInfo, Permission fileAccess);
+    int renameFile(string dirName, string targetFile, string newFileName, FileInfo fileInfo, Permission fileAccess);
+    int deleteFile(string dirname, string targetFile, FileInfo fileInfo, Permission fileAccess);
+    int permissionsFile(string targetUser, string targetFile, vector<string> permission, FileInfo &fileInfo, Permission &fileAccess); // assign permissions to other users
+    void setUserInfo(string &username);
 };
 
 #endif
